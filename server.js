@@ -2,11 +2,10 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
-const SYMBLE = '#'
+const SYMBLE = '@'
 const NAME = 'server'
-const SIZE = 3
 
-let RELOAD = true
+const RELOAD = false
 
 let mLoginFailed = false
 let browser = null
@@ -21,7 +20,7 @@ let COLAB = [
     '1qFe30yHgA-vFvvmVceN0jw2OStG8SeIC'
 ]
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvbGFiLw==', 'base64').toString('ascii')
+let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZS1lM2ZhMi1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20v', 'base64').toString('ascii')
 
 let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Ftun%2Fm%2Fassignments%3Fauthuser%3D0&ec=GAZAqQM&ifkv=ASKXGp2VjIgsjrAwBFLiCjhx-F5QfSM4e9q_N7QDa_b3wN-IPMZNHK_ZiTRaBByb_7kyjZ7DePjB&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S687877650%3A1703041094123974&theme=glif'
 
@@ -34,10 +33,6 @@ process.argv.slice(2).forEach(function (data, index) {
             mData = parseInt(data)
             SERVER = 'gmail_'+data
             readCookies()
-        } else if(index == 1) {
-            if (data == '1' || data == 1) {
-                RELOAD = true
-            }
         }
     } catch (error) {}
 })
@@ -89,6 +84,7 @@ async function startBrowser(data) {
         let page = (await browser.pages())[0]
     
         console.log(SYMBLE+SYMBLE+'---START---'+getID(mData))
+        await updateServer()
 
         let details = await getPageDetails(page)
         await setUserAgent(page, details)
@@ -110,14 +106,15 @@ async function startBrowser(data) {
         await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
         await waitForSelector(page, 'colab-connect-button')
         await setUserId(page)
-        let ID = ((mData-1)*SIZE)+1
+        await updateServer()
+        let ID = ((mData-1)*3)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
         PAGES.push(page)
 
         let cookies = await page.cookies()
         
-        for (let i = 1; i < SIZE; i++) {
+        for (let i = 1; i < 3; i++) {
             let newPage = await browser.newPage()
             await newPage.setCookie(...cookies)
             PAGES.push(newPage)
@@ -125,7 +122,7 @@ async function startBrowser(data) {
             await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
             await waitForSelector(newPage, 'colab-connect-button')
             await setUserId(newPage)
-            let ID = ((mData-1)*SIZE)+i+1
+            let ID = ((mData-1)*3)+i+1
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
@@ -134,10 +131,10 @@ async function startBrowser(data) {
         let mBlock = false
 
         while (true) {
-            for (let i = 0; i < SIZE; i++) {
+            for (let i = 0; i < 3; i++) {
                 await PAGES[i].bringToFront()
                 await delay(1000)
-                let ID = ((mData-1)*SIZE)+i+1
+                let ID = ((mData-1)*3)+i+1
                 await removeCaptha(PAGES[i])
 
                 let block = await PAGES[i].evaluate(() => {
@@ -163,26 +160,18 @@ async function startBrowser(data) {
                     })
         
                     if (input) {
-                        if (RELOAD) {
-                            await PAGES[i].keyboard.type(ID+' 1')
-                        } else {
-                            await PAGES[i].keyboard.type(ID+' 0')
-                        }
+                        await PAGES[i].keyboard.type(parseInt(ID).toString())
                         await delay(200)
                         await PAGES[i].keyboard.press('Enter')
                     } else {
                         let log = await getStatusLog(PAGES[i])
                         if (log == 'START') {
                             console.log(SYMBLE+SYMBLE+'---ACTIVE--'+getID(ID))
-                        } else if (log == 'COMPLETED' || log == 'FINISH') {
+                        } else if (log == 'COMPLETED') {
                             console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(ID))
-                            if (log == 'COMPLETED') {
-                                await colabDisConnected(PAGES[i], 'Earn0'+(i+1), ID)
-                            }
                             await PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
                             await waitForSelector(PAGES[i], 'colab-connect-button')
                             await setUserId(PAGES[i])
-                            await saveCookies(page)
                             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
                         }
                     }
@@ -203,7 +192,7 @@ async function startBrowser(data) {
                 process.exit(0)
             }
 
-            await updateServer(page)
+            await updateServer()
         }
     } catch (error) {
         console.log(error)
@@ -235,8 +224,8 @@ async function logInGmail(page, data) {
                 await page.click('div[data-challengetype="12"]')
                 status = await waitForLoginSuccess(page, true)
                 if (status == 5) {
-                    let recovery = data['recovery'].trim()
-                    if (!recovery.includes('.com')) {
+                    let recovery = data['recovery']
+                    if (!recovery.endsWith('.com')) {
                         recovery += '@gmail.com'
                     }
                     await page.type('#knowledge-preregistered-email-response', recovery)
@@ -260,11 +249,6 @@ async function logInGmail(page, data) {
                 console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
                 process.exit(0)
             }
-        } else if (status == 6) {
-            console.log(SYMBLE+SYMBLE+'--CAPTCHA--'+getID(mData))
-            await saveBlockGmail(data, 'captcha')
-            let send = await changeGmail()
-            await logInGmail(page, send)
         } else {
             console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
             process.exit(0)
@@ -297,34 +281,16 @@ async function colabCheckConnected(page, login) {
     }
 }
 
-async function colabDisConnected(page, name, id) {
-    await page.goto('https://colab.research.google.com/tun/m/assignments?authuser=0', { waitUntil: 'load', timeout: 0 })
-    let list = await connectedList(page)
-    if (list) {
-        if (list.length > 0) {
-            for (let i = 0; i < list.length; i++) {
-                let id = await getFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions?authuser=0', name)
-                if (id) {
-                    await deleteFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions/'+id+'?authuser=0')
-                    await unassingFatch(page, 'https://colab.research.google.com/tun/m/unassign/'+list[i]['endpoint']+'?authuser=0')
-                }
-            }
-            console.log(SYMBLE+SYMBLE+'--DISMISS--'+getID(id))
-        }
-    }
-}
-
 async function setUserId(page) {
-    await delay(1000)
     await page.keyboard.down('Control')
     await page.keyboard.press('Enter')
     await page.keyboard.up('Control')
     await waitForSelector(page, 'mwc-dialog[class="wide"]', 10)
     while (true) {
         try {
-            let data = await exists(page, 'mwc-button[dialogaction="ok"]')
+            let data = await exists(page, 'md-text-button:nth-child(3)')
             if (data) {
-                await page.click('mwc-button[dialogaction="ok"]')
+                await page.click('md-text-button:nth-child(3)')
             } else {
                 break
             }
@@ -350,7 +316,7 @@ async function getPageDetails(page) {
 }
 
 async function setUserAgent(page, details) {
-    let userAgent = 'Mozilla/5.0 (Linux; Android 10; Mi 9T Pro Build/QKQ1.190825.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.6099.43 Mobile Safari/537.36'
+    let userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
     
     await page.evaluateOnNewDocument((userAgent) => {
         let open = window.open
@@ -412,9 +378,6 @@ async function waitForLoginStatus(page) {
                     break
                 } else if(pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pk/presend')) {
                     status = 5
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/recaptcha') || pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/recaptcha')) {
-                    status = 6
                     break
                 }
             }
@@ -566,10 +529,6 @@ async function getStatusLog(page) {
                     }
                     return false
                 })
-
-                if (mDisconnect) {
-                    return 'COMPLETED'
-                }
             }
         } else {
             let has = await exists(page, 'mwc-button[dialogaction="cancel"]')
@@ -579,7 +538,7 @@ async function getStatusLog(page) {
         }
 
         if (mDisconnect) {
-            return 'FINISH'
+            return 'COMPLETED'
         } else {
             let data = await page.evaluate(() => {
                 let root = document.querySelector('colab-static-output-renderer')
@@ -611,13 +570,16 @@ async function getStatusLog(page) {
     return 'NULL'
 }
 
-async function updateServer(page) {
+async function updateServer() {
     let now = new Date().getTime()
 
     if (now > mUpdate) {
         mUpdate = now+300000
-
-        await saveCookies(page)
+        await putAxios(BASE_URL+'status/'+NAME+'/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+600) }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
     }
 }
 
@@ -629,18 +591,81 @@ async function removeCaptha(page) {
             if (cancel) {
                 cancel.click()
             }
-        }
+        } 
     })
 }
 
 async function saveCookies(page) {
-    let cookies = await page.cookies()
+    let cookie = await page.cookies()
+
+    let cookies = []
+
+    for (let i = 0; i < cookie.length; i++) {
+        let name = cookie[i]['name']
+        if (name == 'SAPISID' || name == 'APISID' || name == 'SSID' || name == 'SID' || name == 'HSID') {
+            cookies.push(cookie[i])
+        }
+    }
 
     await putAxios(BASE_URL+NAME+'/'+SERVER+'/cookies.json', JSON.stringify(cookies), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
     })
+}
+
+async function checkConnected() {
+    let timeout = 0
+    let connected = false
+
+    while (true) {
+        await delay(1000)
+        let block = await page.evaluate(() => {
+            let root = document.querySelector('[class="blocked-dialog confirm-dialog"]')
+            if (root) {
+                return true
+            }
+            return false
+        })
+
+        if (block) {
+            break
+        } else {
+            const value = await page.evaluate(() => {
+                let colab = document.querySelector('colab-connect-button')
+                if(colab) {
+                    let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
+                    if (display) {
+                        let ram = display.querySelector('.ram')
+                        if (ram) {
+                            return ram.shadowRoot.querySelector('.label').innerText
+                        }
+                    } else {
+                        let connect = colab.shadowRoot.querySelector('#connect')
+                        if (connect) {
+                            return connect.innerText
+                        }
+                    }
+                }
+                return null
+            })
+    
+            if (value) {
+                timeout++
+    
+                if (value != 'Connect') {
+                    connected = true
+                    break
+                }
+            }
+    
+            if (timeout >= 8) {
+                break
+            }
+        }
+    }
+    
+    return connected
 }
 
 async function connectedList(page) {
@@ -679,7 +704,7 @@ async function connectedList(page) {
 }
 
 
-async function getFatchID(page, url, name) {
+async function getFatchID(page, url) {
     
     let id = null
 
@@ -690,16 +715,16 @@ async function getFatchID(page, url, name) {
                     'headers': {
                         'accept': '*/*',
                         'accept-language': 'en-US,en;q=0.9',
-                        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
+                        'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
                         'sec-ch-ua-mobile': '?0',
                         'sec-ch-ua-platform': '"Windows"',
                         'sec-fetch-dest': 'empty',
-                        'sec-fetch-mode': 'cors',
+                        'sec-fetch-mode': 'same-origin',
                         'sec-fetch-site': 'same-origin',
                         'x-colab-tunnel': 'Google'
                     },
                     'referrer': 'https://colab.research.google.com/',
-                    'referrerPolicy': 'origin',
+                    'referrerPolicy': 'strict-origin-when-cross-origin',
                     'body': null,
                     'method': 'GET',
                     'mode': 'cors',
@@ -714,15 +739,7 @@ async function getFatchID(page, url, name) {
 
         if (data) {
             if (data.length > 0) {
-                if (name) {
-                    if (data[0]['name'].startsWith(name)) {
-                        id = data[0]['id']
-                    } else {
-                        id = null
-                    }
-                } else {
-                    id = data[0]['id']
-                }
+                id = data[0]['id']
             } else {
                 id = null
             }
@@ -742,18 +759,18 @@ async function deleteFatchID(page, url) {
                     'headers': {
                         'accept': '*/*',
                         'accept-language': 'en-US,en;q=0.9',
-                        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
+                        'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
                         'sec-ch-ua-mobile': '?0',
                         'sec-ch-ua-platform': '"Windows"',
                         'sec-fetch-dest': 'empty',
-                        'sec-fetch-mode': 'cors',
+                        'sec-fetch-mode': 'same-origin',
                         'sec-fetch-site': 'same-origin',
                         'x-colab-tunnel': 'Google'
                     },
                     'referrer': 'https://colab.research.google.com/',
-                    'referrerPolicy': 'origin',
+                    'referrerPolicy': 'strict-origin-when-cross-origin',
                     'body': null,
-                    'method': 'DELETE',
+                    'method': 'GET',
                     'mode': 'cors',
                     'credentials': 'include'
                 }).then((response) => {
@@ -779,16 +796,16 @@ async function unassingFatch(page, url) {
                     'headers': {
                         'accept': '*/*',
                         'accept-language': 'en-US,en;q=0.9',
-                        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
+                        'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
                         'sec-ch-ua-mobile': '?0',
                         'sec-ch-ua-platform': '"Windows"',
                         'sec-fetch-dest': 'empty',
-                        'sec-fetch-mode': 'cors',
+                        'sec-fetch-mode': 'same-origin',
                         'sec-fetch-site': 'same-origin',
                         'x-colab-tunnel': 'Google'
                     },
                     'referrer': 'https://colab.research.google.com/',
-                    'referrerPolicy': 'origin',
+                    'referrerPolicy': 'strict-origin-when-cross-origin',
                     'body': null,
                     'method': 'GET',
                     'mode': 'cors',
@@ -811,11 +828,11 @@ async function unassingFatch(page, url) {
                                 'headers': {
                                     'accept': '*/*',
                                     'accept-language': 'en-US,en;q=0.9',
-                                    'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
+                                    'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
                                     'sec-ch-ua-mobile': '?0',
                                     'sec-ch-ua-platform': '"Windows"',
                                     'sec-fetch-dest': 'empty',
-                                    'sec-fetch-mode': 'cors',
+                                    'sec-fetch-mode': 'same-origin',
                                     'sec-fetch-site': 'same-origin',
                                     'x-colab-tunnel': 'Google',
                                     'x-goog-colab-token': token
