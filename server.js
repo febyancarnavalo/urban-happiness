@@ -1,6 +1,16 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
+const path = require('path')
+//const extensionPath = path.resolve(C:\Users\aufalmarom\AppData\Local\Google\Chrome\User Data\Profile 1\Extensions\hlifkpholllijblknnmbfagnkjneagid\0.2.1_0);
+
+const NOPECHA_API_KEY = "5v78tkd9i3fsbsou";
+const { Configuration, NopeCHAApi } = require("nopecha");
+
+const configuration = new Configuration({
+    apiKey: NOPECHA_API_KEY,
+});
+const nopecha = new NopeCHAApi(configuration);
 
 const SYMBLE = '@'
 const NAME = 'server'
@@ -15,12 +25,12 @@ let PAGES = []
 let mUpdate = 0
 
 let COLAB = [
-    '1yPop2ncXf_vqHFQInLUVdWcTRE8H60y8',
-    '1gHpt_yOx_ltR6oLprCnsCS3fpIFHNWVd',
-    '1qFe30yHgA-vFvvmVceN0jw2OStG8SeIC'
+    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_',
+    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_',
+    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_'
 ]
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZS1lM2ZhMi1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20v', 'base64').toString('ascii')
+let BASE_URL = Buffer.from('aHR0cHM6Ly9jcHVkYi02YzJiNC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20v', 'base64').toString('ascii')
 
 let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Ftun%2Fm%2Fassignments%3Fauthuser%3D0&ec=GAZAqQM&ifkv=ASKXGp2VjIgsjrAwBFLiCjhx-F5QfSM4e9q_N7QDa_b3wN-IPMZNHK_ZiTRaBByb_7kyjZ7DePjB&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S687877650%3A1703041094123974&theme=glif'
 
@@ -47,6 +57,7 @@ async function readCookies() {
             if (response.data['data']['block'] != null) {
                 start = false
             }
+            
         } catch (error) {}
 
         if (start) {
@@ -182,7 +193,7 @@ async function startBrowser(data) {
             if(mBlock) {
                 console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
                 await saveBlockGmail(data['data'], 'block')
-                
+                console.log(saveBlockGmail)
                 await putAxios(BASE_URL+NAME+'/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -216,7 +227,8 @@ async function logInGmail(page, data) {
             await waitForPasswordType(page, data['pass'])
             await delay(500)
             await page.click('#passwordNext')
-
+            //await delay(500)
+            //await page.click('#confirm')
             let status = await waitForLoginSuccess(page, false)
 
             if (status == 4) {
@@ -245,6 +257,7 @@ async function logInGmail(page, data) {
                 await saveBlockGmail(data, 'wrong')
                 let send = await changeGmail()
                 await logInGmail(page, send)
+                console.log(logInGmail)
             } else {
                 console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
                 process.exit(0)
@@ -585,13 +598,11 @@ async function updateServer() {
 
 async function removeCaptha(page) {
     await page.evaluate(() => { 
-        let recapture = document.querySelector('colab-recaptcha-dialog')
+        let recapture = document.querySelector("#recaptcha-anchor > div.recaptcha-checkbox-checkmark")
+        //let recapture = document.querySelector("body > colab-recaptcha-dialog")
         if(recapture) { 
-            let cancel = recapture.shadowRoot.querySelector('mwc-button')
-            if (cancel) {
-                cancel.click()
-            }
-        } 
+            recapture.click()
+            } 
     })
 }
 
