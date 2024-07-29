@@ -1,16 +1,8 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
-const path = require('path')
+
 //const extensionPath = path.resolve(C:\Users\aufalmarom\AppData\Local\Google\Chrome\User Data\Profile 1\Extensions\hlifkpholllijblknnmbfagnkjneagid\0.2.1_0);
-
-const NOPECHA_API_KEY = "5v78tkd9i3fsbsou";
-const { Configuration, NopeCHAApi } = require("nopecha");
-
-const configuration = new Configuration({
-    apiKey: NOPECHA_API_KEY,
-});
-const nopecha = new NopeCHAApi(configuration);
 
 const SYMBLE = '@'
 const NAME = 'server'
@@ -25,9 +17,9 @@ let PAGES = []
 let mUpdate = 0
 
 let COLAB = [
-    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_',
-    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_',
-    '1ePwPvsXLQOHShaZKY9RcRHgk_UdIusN_'
+    '12nz5R0bmku01p1oyQl3sBIjydNpZ7-Jc',
+    '12nz5R0bmku01p1oyQl3sBIjydNpZ7-Jc',
+    '12nz5R0bmku01p1oyQl3sBIjydNpZ7-Jc'
 ]
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9jcHVkYi02YzJiNC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20v', 'base64').toString('ascii')
