@@ -219,8 +219,8 @@ async function logInGmail(page, data) {
             await waitForPasswordType(page, data['pass'])
             await delay(500)
             await page.click('#passwordNext')
-            //await delay(500)
-            //await page.click('#confirm')
+            await delay(500)
+            await page.click('#confirm')
             let status = await waitForLoginSuccess(page, false)
 
             if (status == 4) {
