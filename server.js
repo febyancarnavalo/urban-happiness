@@ -17,9 +17,9 @@ let PAGES = []
 let mUpdate = 0
 
 let COLAB = [
-    '1uKYZmIhU3p8784cssefaRmeoPS6hEzt-',
-    '1uKYZmIhU3p8784cssefaRmeoPS6hEzt-',
-    '1uKYZmIhU3p8784cssefaRmeoPS6hEzt-'
+    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7',
+    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7',
+    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7'
 ]
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9zdGFyLWJmMzkxLWRlZmF1bHQtcnRkYi5maXJlYmFzZWlvLmNvbS8=', 'base64').toString('ascii')
