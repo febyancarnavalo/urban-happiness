@@ -17,12 +17,12 @@ let PAGES = []
 let mUpdate = 0
 
 let COLAB = [
-    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7',
-    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7',
-    '1O5PoxV52cTPqFDKoF8OObNaEFkrqzpM7'
+    '1_q4R46YU3jZpJyxXI5_0XqDgU1YvTh0e',
+    '1_q4R46YU3jZpJyxXI5_0XqDgU1YvTh0e',
+    '1_q4R46YU3jZpJyxXI5_0XqDgU1YvTh0e'
 ]
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9zdGFyLWJmMzkxLWRlZmF1bHQtcnRkYi5maXJlYmFzZWlvLmNvbS8=', 'base64').toString('ascii')
+let BASE_URL = Buffer.from('aHR0cHM6Ly9jb2xlcC1lNjNlZC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20v', 'base64').toString('ascii')
 
 let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Ftun%2Fm%2Fassignments%3Fauthuser%3D0&ec=GAZAqQM&ifkv=ASKXGp2VjIgsjrAwBFLiCjhx-F5QfSM4e9q_N7QDa_b3wN-IPMZNHK_ZiTRaBByb_7kyjZ7DePjB&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S687877650%3A1703041094123974&theme=glif'
 
